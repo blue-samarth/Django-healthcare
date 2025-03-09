@@ -3,6 +3,8 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 
 from .models import PatientDoctorMapping
+from patients.models import Patient
+from doctors.models import Doctor
 
 User = get_user_model()
 
@@ -10,8 +12,10 @@ class PatientDoctorMappingSerializer(serializers.ModelSerializer):
     """
     This serializer is used to serialize the PatientDoctorMapping model.
     """
-    patient = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-    doctor = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+
+    patient = serializers.PrimaryKeyRelatedField(queryset=Patient.objects.all())
+    doctor = serializers.PrimaryKeyRelatedField(queryset=Doctor.objects.all())
+
 
     class Meta:
         model = PatientDoctorMapping
@@ -34,29 +38,28 @@ class PatientDoctorMappingSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        """
-        Create a new PatientDoctorMapping instance.
-        """
         user = self.context['request'].user
+        # If the user is a patient, enforce that they are the patient in the mapping.
+        if user.is_patient and validated_data.get('patient') != user:
+            raise serializers.ValidationError("Patients can only create mappings for themselves.")
+        # If the user is a doctor, enforce that they are the doctor in the mapping.
+        if user.is_doctor and validated_data.get('doctor') != user:
+            raise serializers.ValidationError("Doctors can only create mappings for themselves.")
+        # Optionally, check if a mapping already exists.
+        if PatientDoctorMapping.objects.filter(patient=validated_data.get('patient'),
+                                                doctor=validated_data.get('doctor')).exists():
+            raise serializers.ValidationError("This mapping already exists.")
+        return PatientDoctorMapping.objects.create(**validated_data)
 
-        if user != validated_data['patient'] or user != validated_data['doctor']:
-            raise serializers.ValidationError('The patient and doctor must be the authenticated user.')
-        
-        if hasattr(user, 'patient_doctor_mapping'):
-            raise serializers.ValidationError('This appointment already exists.')
-        
-        mapping = PatientDoctorMapping.objects.create(**validated_data)
-        return mapping
     
     def update(self, instance, validated_data):
         """
         Update a PatientDoctorMapping instance.
         """
         user = self.context['request'].user
-
-        if user != instance.patient or user != instance.doctor:
-            raise serializers.ValidationError('The patient and doctor must be the authenticated user.')
-        
+        if user != instance.patient and user != instance.doctor:
+            raise serializers.ValidationError("You are not authorized to update this mapping.")
         instance.notes = validated_data.get('notes', instance.notes)
         instance.save()
         return instance
+
