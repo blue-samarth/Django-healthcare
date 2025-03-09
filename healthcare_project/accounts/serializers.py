@@ -32,5 +32,7 @@ class UserSerializer(serializers.ModelSerializer):
         # if password:
         #     user.set_password(password)
         # user.save()
+        if 'username' not in validated_data:
+            validated_data['username'] = validated_data['email']
         user = User.objects.create_user(**validated_data, password=password)
         return user

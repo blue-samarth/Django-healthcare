@@ -1,6 +1,6 @@
 # healthcare_project/patient_doctor_mapping/views.py
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, generics
 from rest_framework.response import Response
 
 from .models import PatientDoctorMapping
