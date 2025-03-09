@@ -7,12 +7,12 @@ class Config:
     """
     __slots__= ['SECRET_KEY', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST', 'DB_PORT', 'DEBUG']
 
-    def __init__(self, size_of_token: int = 32, DB_NAME: str = 'healthcare_db', DB_USER: str ='postgres',
+    def __init__(self, size_of_token: int = 32, DB_NAME: str = 'django_db', DB_USER: str ='django_user',
                  DB_HOST: str = 'localhost', DB_PORT: str = '5432', DEBUG: bool = False):
         self.SECRET_KEY = token_urlsafe(size_of_token)
         self.DB_NAME = DB_NAME
         self.DB_USER = DB_USER
-        self.DB_PASSWORD = 'password'
+        self.DB_PASSWORD = '1234'
         self.DB_HOST = DB_HOST
         self.DB_PORT = DB_PORT
         self.DEBUG = DEBUG

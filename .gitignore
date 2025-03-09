@@ -14,3 +14,15 @@ wheels/
 
 # Personal log files
 tree.txt
+accounts.txt
+patients.txt
+doctors.txt
+patient_doctor_m
+patient_doctor_mapping.txt
+admins.txt
+
+# Database
+*db*
+
+# Migration files
+migrations/
