@@ -13,7 +13,8 @@ class IsDoctor(permissions.BasePermission):
 
     # First we will make sure the user is authenticated and in order to get the doctor data either the user is a doctor or an admin staff member
     def has_permission(self, request, view):
-        return request.user and (request.user.is_doctor or request.user.is_admin_staff)
+        return request.user.is_authenticated and (request.user.is_doctor or request.user.is_admin_staff)
+
     
     # Then we will make sure the user is the owner of the doctor data
     def has_object_permission(self, request, view, obj):
@@ -38,7 +39,7 @@ class DoctorListCreateViews(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-class DocterDetailView(generics.RetrieveUpdateDestroyAPIView):
+class DoctorDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     This class defines the views for retrieving, updating and deleting doctors
     """
@@ -47,9 +48,8 @@ class DocterDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_admin_staff:
-            return Doctor.objects.all()
-        return Doctor.objects.filter(user=user)
+        return Doctor.objects.all() if user.is_admin_staff else Doctor.objects.filter(user=user)
+
     
     def get_object(self):
         obj = get_object_or_404(self.get_queryset(), pk=self.kwargs['pk'])
