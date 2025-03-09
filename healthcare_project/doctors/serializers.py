@@ -25,7 +25,7 @@ class DoctorSerializer(serializers.ModelSerializer):
         model = Doctor
         fields = ['id', 'user_info', 'name', 'specialty', 'experience', 'phone_number', 'created_at']
         extra_kwargs = {
-            'user': {'write_only': True},
+            'user': {'read_only': True},
             'created_at': {'read_only': True}
         }
 
