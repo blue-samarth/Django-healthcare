@@ -1,5 +1,5 @@
 # healthcare_project/patients/views.py
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404
 from rest_framework import status, generics, permissions
 from rest_framework.response import Response
 
@@ -8,30 +8,57 @@ from .serializers import PatientSerializer
 
 # Create your views here.
 
-class PatientViewSet(generics.GenericAPIView):
+class IsDoctorOrAdminStaff(permissions.BasePermission):
+    """
+    This permission class checks if the user is a doctor or an admin staff
+    """
+    def has_permission(self, request, view):
+        return (request.user.is_doctor or request.user.is_admin_staff) and (request.user.is_authenticated)
+
+
+class PatientListCreateView(generics.ListCreateAPIView):
+    """
+    This view is for listing and creating patients
+    """
     queryset = Patient.objects.all()
     serializer_class = PatientSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
-        patients = Patient.objects.all()
-        serializer = PatientSerializer(patients, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def post(self, request, *args, **kwargs):
-        serializer = PatientSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_doctor or user.is_admin_staff:
+            return Patient.objects.all()
+        return Patient.objects.filter(user=user)
+    
+    def perform_create(self, serializer):
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def put(self, request, pk, *args, **kwargs):
-        patient = Patient.objects.get(pk=pk)
-        serializer = PatientSerializer(patient, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+class PatientDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    This view is for retrieving, updating and deleting patients
+    """
+    serializer_class = PatientSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-    def delete(self, request, pk, *args, **kwargs):
-        patient = Patient.objects.get(pk=pk)
-        patient.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_doctor or user.is_admin_staff:
+            return Patient.objects.all()
+        return Patient.objects.filter(user=user)
+
+    def get_object(self):
+        object = get_object_or_404(self.get_queryset(), pk=self.kwargs['pk'])
+        self.check_object_permissions(self.request, object)
+        return object
+    
+
+class CurrentPatientView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    This view is for retrieving, updating and deleting the current patient
+    """
+    serializer_class = PatientSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        object = get_object_or_404(Patient, user=self.request.user)
+        return object
