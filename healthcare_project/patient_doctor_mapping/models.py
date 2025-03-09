@@ -1,6 +1,6 @@
+# healthcare_project/patient_doctor_mapping/models.py
 from django.db import models
 
-# Create your models here.
 class PatientDoctorMapping(models.Model):
     patient: models.ForeignKey = models.ForeignKey('patients.Patient', on_delete=models.CASCADE, related_name='patient_doctor_mapping')
     doctor: models.ForeignKey = models.ForeignKey('doctors.Doctor', on_delete=models.CASCADE, related_name='patient_doctor_mapping')
